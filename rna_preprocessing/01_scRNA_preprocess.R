@@ -10,7 +10,6 @@ suppressPackageStartupMessages({
   library(patchwork)
   library(future) # For parallelization
   library(Matrix) # Required to work with sparse matrices
-  library(stringr)
 })
 source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
 scscalp_check_requested_package_versions()
@@ -66,9 +65,7 @@ dir.create(plotDir, showWarnings = FALSE, recursive = TRUE)
 message("Reading in data...")
 #raw_data_dir <- "/oak/stanford/groups/wjg/boberrey/hairATAC/analyses/scRNA_preprocessing/filtered_feature_bc_matrices/"
 raw_data_dir <- scscalp_cfg$inputs$raw_rna
-data_dirs <- list.dirs(path=raw_data_dir, full.names=TRUE, recursive=FALSE)
-data_dirs <- data_dirs[grepl("/[A-Z_]+[0-9]+$", data_dirs)]
-names(data_dirs) <- str_extract(data_dirs, "(?<=/)[^/]*$")
+data_dirs <- scscalp_find_10x_sample_dirs(raw_data_dir)
 
 objs <- list()
 for(ix in seq_along(data_dirs)){

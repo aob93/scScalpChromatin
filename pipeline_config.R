@@ -80,6 +80,34 @@ scscalp_asset_path <- function(...) {
   file.path(scscalp_cfg$project_root, ...)
 }
 
+scscalp_find_10x_sample_dirs <- function(base_dir) {
+  sample_dirs <- list.dirs(path = base_dir, full.names = TRUE, recursive = FALSE)
+  sample_names <- basename(sample_dirs)
+
+  nested_matrix_dirs <- file.path(sample_dirs, "outs", "filtered_feature_bc_matrix")
+  nested_ok <- dir.exists(nested_matrix_dirs)
+
+  direct_ok <- file.exists(file.path(sample_dirs, "matrix.mtx")) |
+    file.exists(file.path(sample_dirs, "matrix.mtx.gz"))
+
+  resolved_dirs <- c(
+    stats::setNames(nested_matrix_dirs[nested_ok], sample_names[nested_ok]),
+    stats::setNames(sample_dirs[direct_ok & !nested_ok], sample_names[direct_ok & !nested_ok])
+  )
+
+  if (!length(resolved_dirs)) {
+    stop(
+      sprintf(
+        "No 10x matrix directories found under %s. Expected sample/outs/filtered_feature_bc_matrix or direct matrix directories.",
+        base_dir
+      ),
+      call. = FALSE
+    )
+  }
+
+  resolved_dirs
+}
+
 scscalp_rna_preprocess_dir <- function(...) {
   file.path(scscalp_cfg$results$rna, "preprocessing_output", ...)
 }
