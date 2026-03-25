@@ -47,7 +47,7 @@ pointSize <- 0.5
 ##########################################################################################
 
 #Get scalp input files
-inputFiles <- getInputFiles(scscalp_cfg$inputs$raw_atac_fragments)
+inputFiles <- scscalp_find_atac_fragment_files(scscalp_cfg$inputs$raw_atac_fragments)
 
 # Create Arrow Files (~30 minutes)
 # recommend you use as many threads as samples.

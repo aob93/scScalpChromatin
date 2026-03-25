@@ -108,6 +108,54 @@ scscalp_find_10x_sample_dirs <- function(base_dir) {
   resolved_dirs
 }
 
+scscalp_find_atac_fragment_files <- function(base_dir) {
+  sample_dirs <- list.dirs(path = base_dir, full.names = TRUE, recursive = FALSE)
+  sample_names <- basename(sample_dirs)
+
+  direct_fragment_files <- c("fragments.tsv.gz", "atac_fragments.tsv.gz")
+  nested_fragment_paths <- c(
+    file.path("outs", "fragments.tsv.gz"),
+    file.path("outs", "atac_fragments.tsv.gz")
+  )
+
+  resolved <- character()
+
+  if (length(sample_dirs)) {
+    for (i in seq_along(sample_dirs)) {
+      sample_dir <- sample_dirs[[i]]
+      sample_name <- sample_names[[i]]
+
+      direct_match <- file.path(sample_dir, direct_fragment_files)
+      direct_match <- direct_match[file.exists(direct_match)]
+      nested_match <- file.path(sample_dir, nested_fragment_paths)
+      nested_match <- nested_match[file.exists(nested_match)]
+
+      chosen <- c(direct_match, nested_match)
+      if (length(chosen)) {
+        resolved[[sample_name]] <- chosen[[1]]
+      }
+    }
+  }
+
+  root_level_matches <- file.path(base_dir, direct_fragment_files)
+  root_level_matches <- root_level_matches[file.exists(root_level_matches)]
+  if (length(root_level_matches)) {
+    resolved[[basename(base_dir)]] <- root_level_matches[[1]]
+  }
+
+  if (!length(resolved)) {
+    stop(
+      sprintf(
+        "No ATAC fragment files found under %s. Expected fragments.tsv.gz or atac_fragments.tsv.gz directly under each sample directory or under sample/outs/.",
+        base_dir
+      ),
+      call. = FALSE
+    )
+  }
+
+  resolved
+}
+
 scscalp_rna_preprocess_dir <- function(...) {
   file.path(scscalp_cfg$results$rna, "preprocessing_output", ...)
 }
