@@ -1,0 +1,20 @@
+{
+  "files.associations": {
+    "*.R": "r"
+  },
+  "editor.formatOnSave": false,
+  "[r]": {
+    "editor.defaultFormatter": "REditorSupport.r",
+    "editor.wordBasedSuggestions": "off"
+  },
+  "r.alwaysUseActiveTerminal": true,
+  "r.bracketedPaste": true,
+  "r.lsp.enabled": true,
+  "r.sessionWatcher": true,
+  "r.source.encoding": "UTF-8",
+  "r.rterm.option": [
+    "--no-save",
+    "--no-restore"
+  ],
+  "r.plot.useHttpgd": false
+}

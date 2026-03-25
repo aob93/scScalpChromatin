@@ -12,9 +12,11 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
 })
+source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
+scscalp_check_requested_package_versions()
 
 # Get additional functions, etc.:
-scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin"
+scriptPath <- scscalp_cfg$project_root
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/archr_helpers.R"))
 source(paste0(scriptPath, "/misc_helpers.R"))
@@ -24,10 +26,10 @@ source(paste0(scriptPath, "/matrix_helpers.R"))
 addArchRThreads(threads = 8)
 
 # Working directory
-wd <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/scATAC_preprocessing/baseline_preprocessing/multiplets_removed_output"
+wd <- scscalp_atac_baseline_dir("multiplets_removed_output")
 
 # New directory
-outdir <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/scATAC_preprocessing/fine_clustered"
+outdir <- scscalp_atac_fine_dir()
 dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 setwd(outdir)
 
@@ -82,7 +84,7 @@ names(FineClustLabels) <- getCellNames(atac_proj)
 for(subgroup in subclustered_projects){
     message(sprintf("Reading in subcluster %s", subgroup))
     # Read in subclustered project
-    sub_dir <- sprintf("/oak/stanford/groups/wjg/boberrey/hairATAC/results/scATAC_preprocessing/subclustered_%s", subgroup)
+    sub_dir <- scscalp_atac_subcluster_dir(subgroup)
     sub_proj <- loadArchRProject(sub_dir, force=TRUE)
 
     # Add FineClust to full ArchR project

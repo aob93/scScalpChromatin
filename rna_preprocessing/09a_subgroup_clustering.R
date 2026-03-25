@@ -16,11 +16,13 @@ suppressPackageStartupMessages({
   library(TxDb.Hsapiens.UCSC.hg38.knownGene)
   library(org.Hs.eg.db)
 })
+source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
+scscalp_check_requested_package_versions()
 
 #### Parameters ####
 
 # Set/Create Working Directory to Folder:
-wd <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/scRNA_preprocessing/harmonized_subclustering"
+wd <- scscalp_rna_subcluster_dir()
 setwd(wd)
 
 # Subgroups to subcluster:
@@ -108,7 +110,7 @@ sink(con, type="message")
 for ( obj in ls() ) { cat('---',obj,'---\n'); print(get(obj)) }
 
 # Get additional functions, etc.:
-scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin"
+scriptPath <- scscalp_cfg$project_root
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/iterative_LSI.R"))
 source(paste0(scriptPath, "/seurat_helpers.R"))
@@ -116,7 +118,7 @@ source(paste0(scriptPath, "/misc_helpers.R"))
 source(paste0(scriptPath, "/matrix_helpers.R"))
 
 # color palettes
-sample_cmap <- readRDS("/home/users/boberrey/git_clones/scScalpChromatin/sample_cmap.rds")
+sample_cmap <- readRDS(scscalp_asset_path("sample_cmap.rds"))
 disease_cmap <- head(cmaps_BOR$stallion, 3)
 names(disease_cmap) <- c("AA", "C_SD", "C_PB") 
 
@@ -282,6 +284,5 @@ for(sg in subgroups){
   message("Done.")
 
 }
-
 
 

@@ -10,9 +10,11 @@ library(Seurat)
 library(dplyr)
 library(tidyr)
 library(ComplexHeatmap)
+source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
+scscalp_check_requested_package_versions()
 
 # Get additional functions, etc.:
-scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin"
+scriptPath <- scscalp_cfg$project_root
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/misc_helpers.R"))
 source(paste0(scriptPath, "/matrix_helpers.R"))
@@ -22,7 +24,7 @@ source(paste0(scriptPath, "/archr_helpers.R"))
 addArchRThreads(threads = 8)
 
 # set working directory (The directory of the full preprocessed archr project)
-wd <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/scATAC_preprocessing/fine_clustered"
+wd <- scscalp_atac_fine_dir()
 
 #Set/Create Working Directory to Folder
 dir.create(wd, showWarnings = FALSE, recursive = TRUE)
@@ -42,7 +44,7 @@ barwidth <- 0.9
 ##########################################################################################
 
 atac_proj <- loadArchRProject(wd, force=TRUE)
-rna_proj <- readRDS("/oak/stanford/groups/wjg/boberrey/hairATAC/results/scRNA_preprocessing/preprocessing_output/scalp.rds")
+rna_proj <- readRDS(scscalp_rna_preprocess_dir("scalp.rds"))
 plotDir <- paste0(atac_proj@projectMetadata$outputDirectory, "/Plots")
 
 # Color Maps

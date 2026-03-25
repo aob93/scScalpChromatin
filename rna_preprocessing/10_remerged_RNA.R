@@ -11,11 +11,13 @@ suppressPackageStartupMessages({
   library(future)
   library(Matrix)
 })
+source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
+scscalp_check_requested_package_versions()
 
 #### Parameters ####
 
 #Set/Create Working Directory to Folder
-wd <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/scRNA_preprocessing/preprocessing_output"
+wd <- scscalp_rna_preprocess_dir()
 setwd(wd)
 plotDir <- paste0(wd,"/expression_plots")
 
@@ -24,7 +26,7 @@ nThreads <- 8
 plan("multicore", workers = nThreads)
 
 # Get additional functions, etc.:
-scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin"
+scriptPath <- scscalp_cfg$project_root
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/misc_helpers.R"))
 
@@ -54,7 +56,7 @@ for(subgroup in subgroups){
     message(sprintf("Reading in subcluster %s", subgroup))
 
     # Read in subclustered object
-    sub_dir <- sprintf("/oak/stanford/groups/wjg/boberrey/hairATAC/results/scRNA_preprocessing/harmonized_subclustering/%s", subgroup)
+    sub_dir <- scscalp_rna_subcluster_dir(subgroup)
     sub_obj <- readRDS(paste0(sub_dir, sprintf('/%s.rds', subgroup)))
 
     # Add ManualLabels to full Seurat object

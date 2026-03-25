@@ -10,9 +10,11 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
 })
+source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
+scscalp_check_requested_package_versions()
 
 # Get additional functions, etc.:
-scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin"
+scriptPath <- scscalp_cfg$project_root
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/archr_helpers.R"))
 source(paste0(scriptPath, "/matrix_helpers.R"))
@@ -22,7 +24,7 @@ source(paste0(scriptPath, "/misc_helpers.R"))
 addArchRThreads(threads = 8)
 
 # set working directory
-wd <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/scATAC_preprocessing/baseline_preprocessing"
+wd <- scscalp_atac_baseline_dir()
 
 # color palettes
 sample_cmap <- readRDS(paste0(scriptPath, "/sample_cmap.rds"))
@@ -285,7 +287,7 @@ subgroups <- c("Lymphoid", "Myeloid", "Keratinocytes", "Fibroblasts", "Endotheli
 # Generate and cluster each of the subprojects
 sub_proj_list <- lapply(subgroups, function(sg){
   message(sprintf("Subsetting %s...", sg))
-  outdir <- sprintf("/oak/stanford/groups/wjg/boberrey/hairATAC/results/scATAC_preprocessing/subclustered_%s", sg)
+  outdir <- scscalp_atac_subcluster_dir(sg)
   subClusterArchR(proj, subCells=subClusterCells[[sg]], outdir=outdir)
 })
 names(sub_proj_list) <- subgroups

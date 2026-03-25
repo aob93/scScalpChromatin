@@ -11,9 +11,11 @@ library(Seurat)
 library(dplyr)
 library(tidyr)
 library(ComplexHeatmap)
+source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
+scscalp_check_requested_package_versions()
 
 # Get additional functions, etc.:
-scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin"
+scriptPath <- scscalp_cfg$project_root
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/misc_helpers.R"))
 source(paste0(scriptPath, "/matrix_helpers.R"))
@@ -24,8 +26,8 @@ addArchRThreads(threads = 8)
 
 # set working directory
 subgroup <- "HF_Kc"
-wd <- sprintf("/oak/stanford/groups/wjg/boberrey/hairATAC/results/scATAC_preprocessing/subclustered_%s", subgroup)
-full_dir <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/scATAC_preprocessing/fine_clustered"
+wd <- scscalp_atac_subcluster_dir(subgroup)
+full_dir <- scscalp_atac_fine_dir()
 
 #Set/Create Working Directory to Folder
 dir.create(wd, showWarnings = FALSE, recursive = TRUE)
@@ -44,7 +46,7 @@ pointSize <- 2
 ##########################################################################################
 
 atac_proj <- loadArchRProject(wd, force=TRUE)
-rna_proj <- readRDS(sprintf("/oak/stanford/groups/wjg/boberrey/hairATAC/results/scRNA_preprocessing/harmonized_subclustering/%s/%s.rds", subgroup, subgroup))
+rna_proj <- readRDS(scscalp_rna_subcluster_dir(subgroup, sprintf("%s.rds", subgroup)))
 
 plotDir <- paste0(atac_proj@projectMetadata$outputDirectory, "/Plots")
 
@@ -588,7 +590,7 @@ da_results$majority_lclust <- unlist(atac.FineClust)[da_results$majority_cluster
 da_results <- da_results[order(da_results$PValue, decreasing=FALSE),]
 
 # Save table
-table_dir <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/supplemental_tables"
+table_dir <- file.path(scscalp_cfg$results$root, "supplemental_tables")
 write.table(da_results, file=paste0(table_dir, "/HF_subclustered_Milo_results.tsv"), quote=FALSE, sep="\t", col.names=NA, row.names=TRUE) 
 
 ####################################################################################
@@ -810,4 +812,3 @@ dev.off()
 ####################################################################################
 # Explore differences in WNT dynamics between control and AA samples
 ####################################################################################
-

@@ -11,9 +11,11 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(mclust)
 })
+source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
+scscalp_check_requested_package_versions()
 
 # Get additional functions, etc.:
-scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin/"
+scriptPath <- scscalp_cfg$project_root
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/archr_helpers.R"))
 source(paste0(scriptPath, "/misc_helpers.R"))
@@ -24,10 +26,10 @@ source(paste0(scriptPath, "/sample_metadata.R"))
 addArchRThreads(threads = 10)
 
 # set working directory
-wd <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/scATAC_preprocessing/baseline_preprocessing"
+wd <- scscalp_atac_baseline_dir()
 
 # color palettes
-sample_cmap <- readRDS("/home/users/boberrey/git_clones/hairATAC/sample_cmap.rds")
+sample_cmap <- readRDS(scscalp_asset_path("sample_cmap.rds"))
 
 #Set/Create Working Directory to Folder
 dir.create(wd, showWarnings = FALSE, recursive = TRUE)
@@ -45,7 +47,7 @@ pointSize <- 0.5
 ##########################################################################################
 
 #Get scalp input files
-inputFiles <- getInputFiles("/oak/stanford/groups/wjg/boberrey/hairATAC/scATAC/fragment_files")
+inputFiles <- getInputFiles(scscalp_cfg$inputs$raw_atac_fragments)
 
 # Create Arrow Files (~30 minutes)
 # recommend you use as many threads as samples.
@@ -170,20 +172,27 @@ proj <- addCellColData(proj, data=finalCellCalls$classification, name="cellCall"
 proj <- addCellColData(proj, data=finalCellCalls$cell_uncertainty, name="cellCallUncertainty", cells=rownames(finalCellCalls), force=TRUE)
 
 # Add Demuxlet results to C_SD_POOL sample
-demuxResults <- c("/oak/stanford/groups/wjg/boberrey/hairATAC/bulkATAC/20200108_C_SD_Demux/demuxlet_output/C_SD_POOL.best")
-proj <- addDemuxletResults(proj, bestFiles=demuxResults, sampleNames="C_SD_POOL")
+demuxResults <- scscalp_cfg$inputs$demuxlet_best
+if (length(demuxResults)) {
+    proj <- addDemuxletResults(proj, bestFiles=demuxResults, sampleNames="C_SD_POOL")
 
-# Relabel demuxlet samples to match existing sample formatting
-demuxConvert <- c(
-    "C_SD_01_S15" = "C_SD4",
-    "C_SD_06_S16" = "C_SD5",
-    "C_SD_08_S17" = "C_SD6",
-    "C_SD_10_S18" = "C_SD7"
-    )
-proj$Sample2 <- ifelse(proj$DemuxletBest == "NotClassified", proj$Sample, demuxConvert[proj$DemuxletBest])
+    # Relabel demuxlet samples to match existing sample formatting
+    demuxConvert <- c(
+        "C_SD_01_S15" = "C_SD4",
+        "C_SD_06_S16" = "C_SD5",
+        "C_SD_08_S17" = "C_SD6",
+        "C_SD_10_S18" = "C_SD7"
+        )
+    proj$Sample2 <- ifelse(proj$DemuxletBest == "NotClassified", proj$Sample, demuxConvert[proj$DemuxletBest])
 
-# Real cells pass QC filter and for C_SD_POOL are classified singlets
-realCells <- getCellNames(proj)[(proj$cellCall == "cell") & (proj$DemuxletClassify %ni% c("AMB", "DBL")) & (proj$Sample2 != "C_SD_POOL")]
+    # Real cells pass QC filter and for C_SD_POOL are classified singlets
+    realCells <- getCellNames(proj)[(proj$cellCall == "cell") & (proj$DemuxletClassify %ni% c("AMB", "DBL")) & (proj$Sample2 != "C_SD_POOL")]
+} else {
+    message("No demuxlet file configured. Skipping demuxlet filtering and using Sample as Sample2.")
+    proj$Sample2 <- proj$Sample
+    realCells <- getCellNames(proj)[proj$cellCall == "cell"]
+}
+
 subProj <- subsetArchRProject(proj, cells=realCells, 
     outputDirectory="filtered_output", dropCells=TRUE, force=TRUE)
 

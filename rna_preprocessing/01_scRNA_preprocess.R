@@ -12,6 +12,8 @@ suppressPackageStartupMessages({
   library(Matrix) # Required to work with sparse matrices
   library(stringr)
 })
+source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
+scscalp_check_requested_package_versions()
 
 #### Parameters ####
 
@@ -39,7 +41,7 @@ estDubRate <- 0.04 # Rough estimate based on targeting ~8k cells
 useDecontX <- TRUE
 
 #Set/Create Working Directory to Folder
-wd <- "/oak/stanford/groups/wjg/boberrey/hairATAC/results/scRNA_preprocessing/preprocessing_output"
+wd <- scscalp_rna_preprocess_dir()
 dir.create(wd, showWarnings = FALSE, recursive = TRUE)
 setwd(wd)
 
@@ -52,7 +54,7 @@ sink(con, type="message")
 for ( obj in ls() ) { cat('---',obj,'---\n'); print(get(obj)) }
 
 # Get additional functions, etc.:
-scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin/"
+scriptPath <- scscalp_cfg$project_root
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/seurat_helpers.R"))
 source(paste0(scriptPath, "/sample_metadata.R"))
@@ -63,7 +65,7 @@ dir.create(plotDir, showWarnings = FALSE, recursive = TRUE)
 # Load each of the scalp datasets
 message("Reading in data...")
 #raw_data_dir <- "/oak/stanford/groups/wjg/boberrey/hairATAC/analyses/scRNA_preprocessing/filtered_feature_bc_matrices/"
-raw_data_dir <- "/oak/stanford/groups/wjg/boberrey/hairATAC/scRNA/filtered_feature_bc_matrices"
+raw_data_dir <- scscalp_cfg$inputs$raw_rna
 data_dirs <- list.dirs(path=raw_data_dir, full.names=TRUE, recursive=FALSE)
 data_dirs <- data_dirs[grepl("/[A-Z_]+[0-9]+$", data_dirs)]
 names(data_dirs) <- str_extract(data_dirs, "(?<=/)[^/]*$")
@@ -142,4 +144,3 @@ if(useDecontX){
 # Save intermediate Seurat object:
 message("Pre-processing complete. Saving intermediate Seurat object...")
 saveRDS(obj, file = paste0(wd, "/preprocessed.rds"))
-
