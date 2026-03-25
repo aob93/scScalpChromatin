@@ -45,9 +45,8 @@ dir.create(wd, showWarnings = FALSE, recursive = TRUE)
 setwd(wd)
 
 logfile <- paste0(wd, sprintf("/preprocess_log_%s.txt", format(Sys.time(), "%Y%m%d-%H%M%S")))
-con <- file(logfile, open = "wt")
-sink(con, type="output")
-sink(con, type="message")
+log_state <- scscalp_start_logging(logfile)
+on.exit(scscalp_stop_logging(log_state), add = TRUE)
 
 # Print all parameters to log file
 for ( obj in ls() ) { cat('---',obj,'---\n'); print(get(obj)) }
@@ -81,9 +80,8 @@ for(ix in seq_along(data_dirs)){
 objNames <- sapply(objs, function(x) x@project.name)
 
 # Close connections
-sink(type = "message")
-sink(type = "output")
-close(con)
+scscalp_stop_logging(log_state)
+log_state <- NULL
 
 
 # Perform initial scRNA preprocessing (cell calling, quality filtering, doublet detection, ambient RNA removal):
@@ -102,9 +100,7 @@ objs <- lapply(seq_along(objs), function(i){
   })
 
 # Reopen main log
-con <- file(logfile, open = "at")
-sink(con, type="output", append=TRUE)
-sink(con, type="message", append=TRUE)
+log_state <- scscalp_start_logging(logfile, append = TRUE)
 
 # Merge individual Seurat objects
 obj <- merge(x=objs[[1]], y=objs[2:length(objs)], add.cell.ids=objNames, project="scalp")

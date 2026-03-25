@@ -57,9 +57,19 @@ ATAC_STEPS=(
 run_steps() {
   local stage="$1"
   shift
+  local stage_dir
+  stage_dir="$(printf '%s' "${stage}" | tr '[:upper:]' '[:lower:]')"
+  local log_dir="${SCSCALP_RESULTS_ROOT}/pipeline_logs/${stage_dir}"
+  mkdir -p "${log_dir}"
+
   for script in "$@"; do
+    local script_name
+    script_name="$(basename "${script}" .R)"
+    local script_log="${log_dir}/${script_name}_$(date +%Y%m%d-%H%M%S).log"
+
     printf '[%s] %s\n' "${stage}" "${script}"
-    "${R_BIN}" "${SCSCALP_PROJECT_ROOT}/${script}"
+    printf '[%s] live log: %s\n' "${stage}" "${script_log}"
+    "${R_BIN}" "${SCSCALP_PROJECT_ROOT}/${script}" 2>&1 | tee "${script_log}"
   done
 }
 

@@ -35,6 +35,10 @@ sample_cmap <- readRDS(scscalp_asset_path("sample_cmap.rds"))
 dir.create(wd, showWarnings = FALSE, recursive = TRUE)
 setwd(wd)
 
+logfile <- paste0(wd, sprintf("/prepare_archr_proj_log_%s.txt", format(Sys.time(), "%Y%m%d-%H%M%S")))
+log_state <- scscalp_start_logging(logfile)
+on.exit(scscalp_stop_logging(log_state), add = TRUE)
+
 #Load Genome Annotations
 data("geneAnnoHg38")
 data("genomeAnnoHg38")

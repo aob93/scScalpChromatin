@@ -220,3 +220,36 @@ scscalp_check_requested_package_versions <- function(pkgs = loadedNamespaces()) 
     }
   }
 }
+
+scscalp_start_logging <- function(logfile, append = FALSE) {
+  tee_flag <- if (append) "-a" else ""
+  output_cmd <- trimws(sprintf("tee %s %s", tee_flag, shQuote(logfile)))
+  message_cmd <- sprintf("%s >&2", output_cmd)
+
+  output_con <- pipe(output_cmd, open = "wt")
+  message_con <- pipe(message_cmd, open = "wt")
+
+  sink(output_con, type = "output")
+  sink(message_con, type = "message")
+
+  list(
+    logfile = logfile,
+    output_con = output_con,
+    message_con = message_con
+  )
+}
+
+scscalp_stop_logging <- function(log_state) {
+  if (!is.null(log_state$message_con)) {
+    sink(type = "message")
+  }
+  if (!is.null(log_state$output_con)) {
+    sink(type = "output")
+  }
+  if (!is.null(log_state$message_con) && isOpen(log_state$message_con)) {
+    close(log_state$message_con)
+  }
+  if (!is.null(log_state$output_con) && isOpen(log_state$output_con)) {
+    close(log_state$output_con)
+  }
+}

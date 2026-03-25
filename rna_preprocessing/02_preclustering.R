@@ -43,9 +43,8 @@ dir.create(wd, showWarnings = FALSE, recursive = TRUE)
 setwd(wd)
 
 logfile <- paste0(wd, sprintf("/clustering_log_%s.txt", format(Sys.time(), "%Y%m%d-%H%M%S")))
-con <- file(logfile, open = "wt")
-sink(con, type="output")
-sink(con, type="message")
+log_state <- scscalp_start_logging(logfile)
+on.exit(scscalp_stop_logging(log_state), add = TRUE)
 
 # Print all parameters to log file
 for ( obj in ls() ) { cat('---',obj,'---\n'); print(get(obj)) }
@@ -175,7 +174,3 @@ saveRDS(obj, file = paste0(wd, "/preclustered.rds"))
 saveRDS(lsiOut, file = paste0(wd, "/lsiOut_preclustered.rds"))
 
 message("Done.")
-
-# Close connections
-on.exit({ sink(type = "message"); sink(type = "output"); close(con) })
-

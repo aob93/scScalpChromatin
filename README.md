@@ -8,6 +8,8 @@ The preprocessing scripts support environment-based path configuration for clust
 
 On Biowulf, copy `biowulf/biowulf.env.example` to `biowulf/scscalp.env`, edit the paths once, and then run either `bash biowulf/run_pipeline.sh all` interactively or `sbatch biowulf/scscalp_pipeline.sbatch` as a batch job. Both scripts will source `biowulf/scscalp.env` automatically if it exists.
 
+If you want the local clone to remain the source of truth and only mirror files to Biowulf, use `biowulf/sync_to_biowulf.sh` with `BIOWULF_HOST` and `BIOWULF_REPO_DIR` set in your local shell.
+
 If you want strict runtime package checks, export variables such as `SCSCALP_PKG_SEURAT='>=5.0.0'` or `SCSCALP_PKG_ARCHR='==1.0.3'` before launching. The scripts will stop early if the loaded package versions do not satisfy those requirements.
 
 Fine-mapped SNP analyses (LDSR, intersection with peak-to-gene linkages, and GkmSVM models) are found in the GWAS directory.
