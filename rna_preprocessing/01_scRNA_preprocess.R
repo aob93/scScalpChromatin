@@ -18,7 +18,10 @@ scscalp_check_requested_package_versions()
 
 # Misc
 nThreads <- 8
-plan("multicore", workers = nThreads)
+# important change from Github scScalp version
+options(future.globals.maxSize = 20 * 1024^3)
+options(future.globals.maxSize = scscalp_future_maxsize_bytes())
+future::plan("sequential")
 
 # Cell quality filter criteria
 minFeatures <- 200

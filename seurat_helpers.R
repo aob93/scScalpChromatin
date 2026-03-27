@@ -47,6 +47,15 @@ scRNAdataPreProcessing <- function(
   # dims = which PCA dimensions will be used in DoubletFinder
   # estDubRate = estimated percent doublets (DF.classify will identify exactly this percent as doublets!)
 
+  # Seurat preprocessing on single-sample objects can trigger very large future exports.
+  # Run this helper sequentially unless a caller explicitly configures otherwise upstream.
+  if ("package:future" %in% search()) {
+    oplan <- future::plan()
+    on.exit(future::plan(oplan), add = TRUE)
+    future::plan("sequential")
+    options(future.globals.maxSize = 20 * 1024^3)
+  }
+
   if(use_logfile){
     logfile <- paste0(plotDir, sprintf("/%s_preprocess_log_%s.txt", objPrefix, format(Sys.time(), "%Y%m%d-%H%M%S")))
     con <- file(logfile, open = "wt")
@@ -116,7 +125,7 @@ scRNAdataPreProcessing <- function(
   }
 
   # Return filtered Seurat object
-  obj <- DietSeurat(obj, counts=TRUE, data=TRUE, scale.data=FALSE, assays=assays)
+  obj <- scscalp_diet_seurat(obj, assays=assays, layers=c("counts", "data"))
 
   # Close connections
   message("Finished preprocessing...")
@@ -137,8 +146,13 @@ seuratPreProcess <- function(obj, selectionMethod="vst", nFeatures=2000, dims=1:
   obj <- FindVariableFeatures(obj, selection.method=selectionMethod, nfeatures=nFeatures)
   obj <- RunPCA(obj)
   obj <- RunUMAP(obj, dims=dims)
-  obj <- FindNeighbors(obj, dims=dims)
-  obj <- FindClusters(obj, resolution=res, random.seed=1)
+  obj <- scscalp_find_neighbors_and_clusters(
+    object = obj,
+    reduction = "pca",
+    dims = dims,
+    resolution = res,
+    random.seed = seed
+  )
   return(obj)
 }
 
@@ -148,14 +162,36 @@ runDoubletFinder <- function(obj, dims, estDubRate=0.075, ncores=1){
   # Return the seurat object with the selected pANN parameter and the 
   # DoubletFinder doublet classifications
 
+  get_doubletfinder_fn <- function(candidates) {
+    ns <- asNamespace("DoubletFinder")
+    for (fn_name in candidates) {
+      fn <- get0(fn_name, envir = ns, mode = "function", inherits = FALSE)
+      if (!is.null(fn)) {
+        return(fn)
+      }
+    }
+    stop(
+      sprintf(
+        "Could not find any DoubletFinder function among: %s",
+        paste(candidates, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
+  param_sweep_fn <- get_doubletfinder_fn(c("paramSweep_v3", "paramSweep"))
+  summarize_sweep_fn <- get_doubletfinder_fn(c("summarizeSweep"))
+  find_pk_fn <- get_doubletfinder_fn(c("find.pK"))
+  doublet_finder_fn <- get_doubletfinder_fn(c("doubletFinder_v3", "doubletFinder"))
+
   ### pK Identification (parameter-sweep) ###
   # "pK ~ This defines the PC neighborhood size used to compute pANN (proportion of artificial nearest neighbors), 
   # expressed as a proportion of the merged real-artificial data. 
   # No default is set, as pK should be adjusted for each scRNA-seq dataset"
 
-  sweep.res.list <- paramSweep_v3(obj, PCs=dims, sct=FALSE, num.cores=ncores)
-  sweep.stats <- summarizeSweep(sweep.res.list, GT=FALSE)
-  bcmvn <- find.pK(sweep.stats)
+  sweep.res.list <- param_sweep_fn(obj, PCs=dims, sct=FALSE, num.cores=ncores)
+  sweep.stats <- summarize_sweep_fn(sweep.res.list, GT=FALSE)
+  bcmvn <- find_pk_fn(sweep.stats)
   pK <- bcmvn$pK[which.max(bcmvn$BCmetric)] %>% as.character() %>% as.numeric()
   message(sprintf("Using pK = %s...", pK))
 
@@ -163,7 +199,7 @@ runDoubletFinder <- function(obj, dims, estDubRate=0.075, ncores=1){
   nExp_poi <- round(estDubRate * length(Cells(obj)))
 
   # DoubletFinder:
-  obj <- doubletFinder_v3(obj, PCs = dims, pN = 0.25, pK = pK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+  obj <- doublet_finder_fn(obj, PCs = dims, pN = 0.25, pK = pK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
 
   # Rename results into more useful annotations
   pann <- grep(pattern="^pANN", x=names(obj@meta.data), value=TRUE)
@@ -186,7 +222,7 @@ runDecontX <- function(obj, seed=1){
 
   # DecontX can take either `SingleCellExperiment` object... or a single counts matrix as input. 
   # `decontX` will attempt to convert any input matrix to class `dgCMatrix` before beginning any analyses.
-  counts <- GetAssayData(object = obj, slot = "counts")
+  counts <- scscalp_get_assay_data(object = obj, layer = "counts")
   clusters <- Idents(obj) %>% as.numeric()
 
   # Run on only expressed genes
@@ -201,7 +237,12 @@ runDecontX <- function(obj, seed=1){
   newCounts <- decon$decontXcounts
   # Add back unexpressed genes and sort according to original counts
   newCounts <- rbind(newCounts, counts[rowSums(counts)==0,])[rownames(counts),]
-  obj[["RNA"]]@counts <- as(round(newCounts), "sparseMatrix")
+  obj <- scscalp_set_assay_data(
+    object = obj,
+    assay = "RNA",
+    layer = "counts",
+    new.data = as(round(newCounts), "sparseMatrix")
+  )
   obj$estConp <- decon$contamination # Estimated 'contamination proportion, 0 to 1'
 
   return(obj)
@@ -302,6 +343,3 @@ plotClusterQC <- function(obj, subgroup, plotDir, pointSize=1.0, barwidth=0.9, s
   print(plotUMAP(umapDF, dataType="qualitative", cmap=qualcmap, point_size=pointSize))
   dev.off()
 }
-
-
-

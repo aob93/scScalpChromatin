@@ -20,7 +20,8 @@ useMagic <- TRUE # Should Rmagic be used for data imputation prior to UMAP plott
 
 # change the current plan to access parallelization (for Seurat)
 nThreads <- 8
-plan("multicore", workers=nThreads)
+options(future.globals.maxSize = scscalp_future_maxsize_bytes())
+scscalp_set_future_plan("multicore", workers=nThreads)
 
 # Get additional functions, etc.:
 scriptPath <- scscalp_cfg$project_root
@@ -87,7 +88,7 @@ featureSets <- list(
 )
 
 # Get expression data:
-expr <- GetAssayData(obj, slot = 'data') %>% t()
+expr <- scscalp_get_assay_data(obj, layer = "data") %>% t()
 expr <- as(expr[,Matrix::colSums(expr) > 0], "sparseMatrix") # Remove unexpressed genes
 
 selectedGenes <- unlist(featureSets) %>% unname()
@@ -121,7 +122,7 @@ for(name in names(featureSets)){
 }
 
 # Dot plot of cluster markers
-count_mat <- GetAssayData(object = obj, slot = "counts")
+count_mat <- scscalp_get_assay_data(object = obj, layer = "counts")
 avgPctMat <- avgAndPctExpressed(count_mat, obj$Clusters, feature_normalize=TRUE, min_pct=5)
 
 # Subset to genes we care about:

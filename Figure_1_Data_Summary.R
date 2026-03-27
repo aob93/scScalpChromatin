@@ -13,6 +13,7 @@ library(ComplexHeatmap)
 
 # Get additional functions, etc.:
 scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin"
+source(paste0(scriptPath, "/pipeline_config.R"))
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/misc_helpers.R"))
 source(paste0(scriptPath, "/matrix_helpers.R"))
@@ -142,7 +143,7 @@ namedClustAspect <- 1.6
 fineClustAspect <- 1.6
 
 # Dot plot of RNA cluster markers
-count_mat <- GetAssayData(object=rna_proj, slot="counts")
+count_mat <- scscalp_get_assay_data(object=rna_proj, layer="counts")
 avgPctMat <- avgAndPctExpressed(count_mat, rna_proj$NamedClust, feature_normalize=TRUE, min_pct=0)
 
 # Subset to genes we care about:

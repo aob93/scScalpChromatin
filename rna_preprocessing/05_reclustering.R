@@ -21,7 +21,8 @@ scscalp_check_requested_package_versions()
 
 # Misc
 nThreads <- 8
-plan("multicore", workers = nThreads)
+options(future.globals.maxSize = scscalp_future_maxsize_bytes())
+scscalp_set_future_plan("multicore", workers = nThreads)
 
 # Iterative LSI params
 nVarGenes <- 4000
@@ -67,7 +68,7 @@ obj <- readRDS(paste0(wd, "/preclustered.rds"))
 invalid.clusters <- as.character(c(18, 26, 28, 29))
 obj <- subset(obj, idents = c(invalid.clusters), invert=TRUE)
 
-rawCounts <- GetAssayData(object = obj, slot = "counts")
+rawCounts <- scscalp_get_assay_data(object = obj, layer = "counts")
 
 # Identify genes we want to blacklist during clustering
 
@@ -103,7 +104,7 @@ clusters <- NULL
 # Depth normalize to 10,000, add pseudo count, and then log2 transform
 log2CP10k <- sparseLogX(rawCounts, logtype="log2", scale=TRUE, scaleFactor=10^4)
 # Store the log2CP10k
-obj <- SetAssayData(object = obj, slot = "data", new.data = log2CP10k)
+obj <- scscalp_set_assay_data(object = obj, layer = "data", new.data = log2CP10k)
 
 message("Running iterative LSI...")
 set.seed(1)
@@ -135,9 +136,14 @@ for(i in seq_along(resolution)){
 
     reducName <- paste0("LSI_iter",i)
     obj[[reducName]] <- CreateDimReducObject(embeddings = LSIi$matSVD, key = sprintf("LSI%s_", i), assay = "RNA")
-    obj <- FindNeighbors(object = obj, reduction = reducName, dims = nPCs, force.recalc = TRUE)
     message(sprintf("Clustering with resolution %s...", resolution[i]))
-    obj <- FindClusters(object = obj, resolution = resolution[i])
+    obj <- scscalp_find_neighbors_and_clusters(
+      object = obj,
+      reduction = reducName,
+      dims = nPCs,
+      resolution = resolution[i],
+      random.seed = 1
+    )
     clusters <- Idents(obj)
     #Store information
     lsiOut[[reducName]] <- list(

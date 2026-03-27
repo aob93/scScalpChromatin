@@ -14,6 +14,7 @@ library(ggrastr)
 
 # Get additional functions, etc.:
 scriptPath <- "/home/users/boberrey/git_clones/scScalpChromatin"
+source(paste0(scriptPath, "/pipeline_config.R"))
 source(paste0(scriptPath, "/plotting_config.R"))
 source(paste0(scriptPath, "/misc_helpers.R"))
 source(paste0(scriptPath, "/matrix_helpers.R"))
@@ -348,7 +349,7 @@ dev.off()
 ##########################################################################################
 
 # Get all expressed genes:
-count.mat <- Seurat::GetAssayData(object=readRDS(rna_proj_path), slot="counts")
+count.mat <- scscalp_get_assay_data(object=readRDS(rna_proj_path), layer="counts")
 minUMIs <- 1
 minCells <- 2
 valid.genes <- rownames(count.mat[rowSums(count.mat > minUMIs) > minCells,])

@@ -120,7 +120,8 @@ atac.NamedClust <- list(
     "aVe2" = "Vas.Endo_2",
     "aLe1" = "Lymph.Endo",
     "aMe1" = "Melanocytes",
-    "aBc1" = "Plasma"
+    "aBc1" = "Plasma",
+    "aOther1" = "Other"
 )
 
 atac.FineClust <- list(
@@ -177,4 +178,3 @@ atac.FineClust <- list(
     "aHF5" = "Matrix",
     "aHF6" = "HFSCs"
 )
-

@@ -162,12 +162,32 @@ clustNames <- list(
   "C19" = "aLe1",
   "C20" = "aMy3",
   "C21" = "aBc1",
-  "C22" = "aKc7"
+  "C22" = "aKc7",
+  "C23" = "aBc1",
+  "C24" = "aKc7",
+  "C25" = "aOther1"
   )
-proj$NamedClust <- clustNames[proj$Clusters] %>% unlist()
+
+named_clust <- vapply(
+  clustNames[as.character(proj$Clusters)],
+  function(x) if (is.null(x)) NA_character_ else x,
+  character(1)
+)
+missing_clust <- unique(as.character(proj$Clusters)[is.na(named_clust)])
+if (length(missing_clust)) {
+  warning(
+    sprintf(
+      "Missing NamedClust labels for clusters: %s. Assigning them to aOther1.",
+      paste(missing_clust, collapse = ", ")
+    ),
+    call. = FALSE
+  )
+  named_clust[is.na(named_clust)] <- "aOther1"
+}
+proj$NamedClust <- named_clust
 
 # Assign 'broad clusters' as well
-proj$BroadClust <- proj$NamedClust %>% gsub('[0-9]+', '', .) %>% sub('.', '', .)
+proj$BroadClust <- proj$NamedClust %>% gsub('[0-9]+', '', .) %>% sub("^.", "", .)
 
 # Determine colors to use for plots
 
@@ -193,8 +213,8 @@ set.seed(1)
 expandedColors <- getColorMap(cmaps_BOR$stallion, n=50)
 expandedColors <- expandedColors[expandedColors %ni% c(colorPal, rnaNamedClustCmap)]
 
-broadClust <- unique(atac_proj$BroadClust)
-namedClust <- unique(atac_proj$NamedClust)
+broadClust <- unique(proj$BroadClust)
+namedClust <- unique(proj$NamedClust)
 labelHierarchy <- lapply(broadClust, function(x) namedClust[grepl(x, namedClust)])
 names(labelHierarchy) <- broadClust
 labelMap <- invertList(labelHierarchy)
@@ -216,7 +236,7 @@ barwidth=0.9
 
 # Plot the UMAPs by Sample and Cluster:
 p1 <- plotEmbedding(ArchRProj=proj, colorBy="cellColData", name="Clusters", embedding="UMAP", plotAs="points", size=pointSize, labelMeans=FALSE)
-p2 <- plotEmbedding(ArchRProj=proj, colorBy = "cellColData", name="NamedClust", pal=unlist(narrowColors),
+p2 <- plotEmbedding(ArchRProj=proj, colorBy = "cellColData", name="NamedClust", pal=unlist(atacNamedClustCmap),
     embedding = "UMAP", plotAs="points", size=pointSize, labelMeans = FALSE)
 p3 <- plotEmbedding(ArchRProj = proj, colorBy="cellColData", name="BroadClust", pal=unlist(colorPal),
     embedding="UMAP", plotAs="points", size=pointSize, labelMeans=FALSE)

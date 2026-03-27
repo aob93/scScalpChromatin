@@ -20,7 +20,8 @@ useMagic <- TRUE # Should Rmagic be used for data imputation prior to UMAP plott
 
 # change the current plan to access parallelization (for Seurat)
 nThreads <- 8
-plan("multicore", workers = nThreads)
+options(future.globals.maxSize = scscalp_future_maxsize_bytes())
+scscalp_set_future_plan("multicore", workers = nThreads)
 
 # Get additional functions, etc.:
 scriptPath <- scscalp_cfg$project_root
@@ -67,7 +68,7 @@ write.table(obj.markers, file=paste0(wd, sprintf("/marker_genes_%s.tsv", subgrou
 
 # Use only expressed genes in GO term analyses:
 # Define 'expressed genes' as those with at least 2 counts in at least 5 cells
-rawCounts <- GetAssayData(object = obj, slot = "counts")
+rawCounts <- scscalp_get_assay_data(object = obj, layer = "counts")
 minUMIs <- 2
 minCells <- 3
 expressedGenes <- rownames(rawCounts[rowSums(rawCounts > minUMIs) > minCells,])
@@ -113,7 +114,7 @@ qualcmap <- cmaps_BOR$stallion
 quantcmap <- cmaps_BOR$sunrise
 
 # Get expression data:
-expr <- GetAssayData(obj, slot = 'data') %>% t()
+expr <- scscalp_get_assay_data(obj, layer = "data") %>% t()
 expr <- expr[,Matrix::colSums(expr) > 0] # Remove unexpressed genes
 
 featureSets <- list(
@@ -160,7 +161,7 @@ for(name in names(featureSets)){
 
 
 # Dot plot of marker Genes:
-count_mat <- GetAssayData(object = obj, slot = "counts")
+count_mat <- scscalp_get_assay_data(object = obj, layer = "counts")
 avgPctMat <- avgAndPctExpressed(count_mat, obj$Clusters, feature_normalize=TRUE, min_pct=5)
 
 # Subset to genes we care about:

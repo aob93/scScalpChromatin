@@ -170,7 +170,16 @@ sparseLogX <- function(spmat, logtype="log2", scale=FALSE, scaleFactor=10^4){
   stopifnot(any(logtype == c("log", "log2", "log10")))
 
   if(scale == TRUE){
-      spmat <- t(t(spmat)/Matrix::colSums(spmat)) * scaleFactor
+      if(is(spmat, "sparseMatrix")){
+        spmat <- as(spmat, "dgCMatrix")
+        col_sums <- Matrix::colSums(spmat)
+        scale_vec <- ifelse(col_sums > 0, scaleFactor / col_sums, 0)
+        spmat <- spmat %*% Matrix::Diagonal(x = scale_vec)
+      } else {
+        col_sums <- colSums(spmat)
+        scale_vec <- ifelse(col_sums > 0, scaleFactor / col_sums, 0)
+        spmat <- sweep(spmat, 2, scale_vec, `*`)
+      }
   }
 
   if(is(spmat, "sparseMatrix")){

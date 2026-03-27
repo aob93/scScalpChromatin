@@ -12,6 +12,8 @@ If you want the local clone to remain the source of truth and only mirror files 
 
 If you want strict runtime package checks, export variables such as `SCSCALP_PKG_SEURAT='>=5.0.0'` or `SCSCALP_PKG_ARCHR='==1.0.3'` before launching. The scripts will stop early if the loaded package versions do not satisfy those requirements.
 
+If `future` reports that exported globals are too large, increase `SCSCALP_FUTURE_GLOBALS_MAXSIZE_GB` in `biowulf/scscalp.env`. The default is now 8 GiB.
+
 Fine-mapped SNP analyses (LDSR, intersection with peak-to-gene linkages, and GkmSVM models) are found in the GWAS directory.
 
 Processed and annotated Seurat objects for scRNA-seq data can be found [here](https://drive.google.com/drive/folders/1klScH010LvYxdU-TZiSkGVip9IrilZN2?usp=sharing). This includes the objects for the subclustered keratinocytes, fibroblasts, endothelial, lymphoid, and myeloid groups. (We may change the location of these files in the future if we find a better place to host them, but will update this page with the location.)

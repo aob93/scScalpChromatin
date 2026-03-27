@@ -23,7 +23,8 @@ plotDir <- paste0(wd,"/expression_plots")
 
 # change the current plan to access parallelization (for Seurat)
 nThreads <- 8
-plan("multicore", workers = nThreads)
+options(future.globals.maxSize = scscalp_future_maxsize_bytes())
+scscalp_set_future_plan("multicore", workers = nThreads)
 
 # Get additional functions, etc.:
 scriptPath <- scscalp_cfg$project_root

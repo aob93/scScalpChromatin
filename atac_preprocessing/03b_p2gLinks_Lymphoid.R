@@ -12,6 +12,7 @@ library(tidyr)
 library(ComplexHeatmap)
 source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
 scscalp_check_requested_package_versions()
+scscalp_require_hg38_bsgenome()
 
 # Get additional functions, etc.:
 scriptPath <- scscalp_cfg$project_root
@@ -45,7 +46,7 @@ pointSize <- 1.0
 ##########################################################################################
 
 atac_proj <- loadArchRProject(wd, force=TRUE)
-rna_proj <- readRDS(scscalp_rna_subcluster_dir(subgroup, sprintf("%s.rds", subgroup)))
+rna_proj <- scscalp_load_rna_reference(level = "subcluster", subgroup = subgroup)
 
 plotDir <- paste0(atac_proj@projectMetadata$outputDirectory, "/Plots")
 

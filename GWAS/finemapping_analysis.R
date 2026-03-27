@@ -416,7 +416,7 @@ rna_proj$LFineClust <- unlist(rna.FineClust)[rna_proj$FineClust]
 exclude_clust <- c("Unknown", "Cyc.Tc", "Plasma_contam", "TCR.macs", "McSC")
 rna_proj <- rna_proj[,rna_proj$LFineClust %ni% exclude_clust]
 
-countMat <- GetAssayData(object=rna_proj, slot="counts")
+countMat <- scscalp_get_assay_data(object=rna_proj, layer="counts")
 groupedCountMat <- averageExpr(countMat, rna_proj$FineClust) # Calculates average log2cp10k, so must only subset afterwards
 
 # Specify order of clusters (Fine Clust)

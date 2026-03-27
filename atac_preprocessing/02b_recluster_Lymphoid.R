@@ -45,7 +45,7 @@ pointSize <- 1.0
 ##########################################################################################
 
 atac_proj <- loadArchRProject(wd, force=TRUE)
-rna_proj <- readRDS(scscalp_rna_subcluster_dir(subgroup, sprintf("%s.rds", subgroup)))
+rna_proj <- scscalp_load_rna_reference(level = "subcluster", subgroup = subgroup)
 
 plotDir <- paste0(atac_proj@projectMetadata$outputDirectory, "/Plots")
 
@@ -201,7 +201,7 @@ atac_order <- c(
   "CD4.Tc_2",
   "CD4.Tc_3"
 )
-cM <- cM[atac_order, rna_order]
+cM <- reorderLabeledMatrix(cM, row_order = atac_order, col_order = rna_order, context = subgroup)
 
 atac_label_cmap <- atac_label_cmap[names(atac_label_cmap) %in% rownames(cM)]
 rna_label_cmap <- rna_label_cmap[names(rna_label_cmap) %in% colnames(cM)]

@@ -14,6 +14,7 @@ suppressPackageStartupMessages({
 })
 source(file.path(dirname(normalizePath(sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE)[1]), mustWork = TRUE)), "..", "pipeline_config.R"))
 scscalp_check_requested_package_versions()
+scscalp_require_hg38_bsgenome()
 
 # Get additional functions, etc.:
 scriptPath <- scscalp_cfg$project_root

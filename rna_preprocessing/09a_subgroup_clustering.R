@@ -98,7 +98,8 @@ nThreads <- 8
 umapDistMetric <- "cosine"
 
 # change the current plan to access parallelization (for Seurat)
-plan("multicore", workers = nThreads)
+options(future.globals.maxSize = scscalp_future_maxsize_bytes())
+scscalp_set_future_plan("multicore", workers = nThreads)
 
 # Start logging:
 logfile <- paste0(wd, sprintf("/subclustering_log_%s.txt", format(Sys.time(), "%Y%m%d-%H%M%S")))
@@ -125,7 +126,7 @@ names(disease_cmap) <- c("AA", "C_SD", "C_PB")
 
 # First get list of all genes:
 subwd <- paste0(wd, sprintf("/%s", subgroups[1]))
-allGenes <- rownames(GetAssayData(object=readRDS(paste0(subwd, sprintf('/%s.rds', subgroups[1]))), slot="counts"))
+allGenes <- rownames(scscalp_get_assay_data(object=readRDS(paste0(subwd, sprintf('/%s.rds', subgroups[1]))), layer="counts"))
 
 # Identify genes we want to blacklist during clustering
 
@@ -196,7 +197,7 @@ for(sg in subgroups){
   harmonize <- paramDict[[sg]]$harmonize
   covariates <- paramDict[[sg]]$covariates
 
-  rawCounts <- GetAssayData(object = obj, slot = "counts")
+  rawCounts <- scscalp_get_assay_data(object = obj, layer = "counts")
 
   #Initialize list for storing iterative LSI output
   lsiOut <- list()
@@ -204,7 +205,7 @@ for(sg in subgroups){
 
   # Depth normalize to 10,000, add pseudo count, and then log2 transform
   log2CP10k <- sparseLogX(rawCounts, logtype="log2", scale=TRUE, scaleFactor=10^4)
-  obj <- SetAssayData(object = obj, slot = "data", new.data = log2CP10k)
+  obj <- scscalp_set_assay_data(object = obj, layer = "data", new.data = log2CP10k)
 
   message("Running iterative LSI...")
   set.seed(1)
@@ -236,9 +237,14 @@ for(sg in subgroups){
 
       reducName <- paste0("LSI_iter",i)
       obj[[reducName]] <- CreateDimReducObject(embeddings = LSIi$matSVD, key = sprintf("LSI%s_", i), assay = "RNA")
-      obj <- FindNeighbors(object = obj, reduction = reducName, dims = nPCs, force.recalc = TRUE)
       message(sprintf("Clustering with resolution %s...", resolution[i]))
-      obj <- FindClusters(object = obj, resolution = resolution[i])
+      obj <- scscalp_find_neighbors_and_clusters(
+        object = obj,
+        reduction = reducName,
+        dims = nPCs,
+        resolution = resolution[i],
+        random.seed = 1
+      )
       clusters <- Idents(obj)
       #Store information
       lsiOut[[reducName]] <- list(
@@ -283,4 +289,3 @@ for(sg in subgroups){
   message("Done.")
 
 }
-

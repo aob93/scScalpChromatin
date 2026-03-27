@@ -71,6 +71,46 @@ jaccardIndex <- function(mat, i, j){
   AiB/AuB
 }
 
+reorderLabeledMatrix <- function(mat, row_order = NULL, col_order = NULL, context = "matrix") {
+  # Safely reorder a labeled matrix while tolerating absent labels.
+  stopifnot(!is.null(rownames(mat)), !is.null(colnames(mat)))
+
+  use_rows <- rownames(mat)
+  use_cols <- colnames(mat)
+
+  if (!is.null(row_order)) {
+    missing_rows <- setdiff(row_order, rownames(mat))
+    if (length(missing_rows)) {
+      message(sprintf(
+        "Warning! %s missing requested row labels: %s",
+        context,
+        paste(missing_rows, collapse = ", ")
+      ))
+    }
+    matched_rows <- intersect(row_order, rownames(mat))
+    if (length(matched_rows)) {
+      use_rows <- matched_rows
+    }
+  }
+
+  if (!is.null(col_order)) {
+    missing_cols <- setdiff(col_order, colnames(mat))
+    if (length(missing_cols)) {
+      message(sprintf(
+        "Warning! %s missing requested column labels: %s",
+        context,
+        paste(missing_cols, collapse = ", ")
+      ))
+    }
+    matched_cols <- intersect(col_order, colnames(mat))
+    if (length(matched_cols)) {
+      use_cols <- matched_cols
+    }
+  }
+
+  mat[use_rows, use_cols, drop = FALSE]
+}
+
 
 #####################################
 # Misc Genomics Tools
@@ -383,7 +423,6 @@ runMilo <- function(obj, dim_reduction, k=30, prop=0.1, min_cells_per_samp=50, c
 
 
 #################################################################################
-
 
 
 

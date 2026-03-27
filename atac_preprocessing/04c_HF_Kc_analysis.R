@@ -46,7 +46,7 @@ pointSize <- 2
 ##########################################################################################
 
 atac_proj <- loadArchRProject(wd, force=TRUE)
-rna_proj <- readRDS(scscalp_rna_subcluster_dir(subgroup, sprintf("%s.rds", subgroup)))
+rna_proj <- scscalp_load_rna_reference(level = "subcluster", subgroup = subgroup)
 
 plotDir <- paste0(atac_proj@projectMetadata$outputDirectory, "/Plots")
 

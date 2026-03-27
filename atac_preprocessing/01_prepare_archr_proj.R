@@ -188,12 +188,13 @@ if (length(demuxResults)) {
         "C_SD_10_S18" = "C_SD7"
         )
     proj$Sample2 <- ifelse(proj$DemuxletBest == "NotClassified", proj$Sample, demuxConvert[proj$DemuxletBest])
+    proj$Sample2 <- scscalp_normalize_sample_id(proj$Sample2)
 
     # Real cells pass QC filter and for C_SD_POOL are classified singlets
     realCells <- getCellNames(proj)[(proj$cellCall == "cell") & (proj$DemuxletClassify %ni% c("AMB", "DBL")) & (proj$Sample2 != "C_SD_POOL")]
 } else {
     message("No demuxlet file configured. Skipping demuxlet filtering and using Sample as Sample2.")
-    proj$Sample2 <- proj$Sample
+    proj$Sample2 <- scscalp_normalize_sample_id(proj$Sample)
     realCells <- getCellNames(proj)[proj$cellCall == "cell"]
 }
 
@@ -201,9 +202,28 @@ subProj <- subsetArchRProject(proj, cells=realCells,
     outputDirectory="filtered_output", dropCells=TRUE, force=TRUE)
 
 # Add sample metadata
-subProj$preservation <- samp.preservation[subProj$Sample2] %>% unlist() %>% as.factor()
-subProj$sex <- samp.sex[subProj$Sample2] %>% unlist() %>% as.factor()
-subProj$age <- samp.age[subProj$Sample2] %>% unlist()
+subProj$Sample2 <- scscalp_normalize_sample_id(subProj$Sample2)
+subProj$preservation <- factor(scscalp_lookup_sample_metadata(
+  subProj$Sample2,
+  samp.preservation,
+  "preservation",
+  allow_missing = TRUE,
+  missing_value = "pooled"
+))
+subProj$sex <- factor(scscalp_lookup_sample_metadata(
+  subProj$Sample2,
+  samp.sex,
+  "sex",
+  allow_missing = TRUE,
+  missing_value = NA_character_
+))
+subProj$age <- as.numeric(scscalp_lookup_sample_metadata(
+  subProj$Sample2,
+  samp.age,
+  "age",
+  allow_missing = TRUE,
+  missing_value = NA_real_
+))
 
 # Now, add tile matrix and gene score matrix to ArchR project
 subProj <- addTileMatrix(subProj, force=TRUE)
