@@ -67,9 +67,6 @@ names(rna_label_cmap) <- unlist(rna.FineClust)[names(rna_label_cmap)]
 atac_label_cmap <- atac_sub_cmap
 names(atac_label_cmap) <- unlist(atac.FineClust)[names(atac_label_cmap)]
 
-atac_proj$LFineClust <- unlist(atac.FineClust)[atac_proj$FineClust]
-rna_proj$LFineClust <- unlist(rna.FineClust)[rna_proj$FineClust]
-
 ###########################################################################################
 # Do not proceed prior to calling peaks
 ###########################################################################################

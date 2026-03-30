@@ -55,8 +55,33 @@ getClusterPeaks <- function(proj, clusterNames, peakGR=NULL, replicateScoreQuant
     peakGR <- getPeakSet(proj)
   }
   peakDir <- paste0(proj@projectMetadata$outputDirectory, "/PeakCalls")
+  peakSearchDirs <- c(
+    peakDir,
+    list.dirs(peakDir, recursive = FALSE, full.names = TRUE)
+  ) %>% unique()
   calledPeaks <- lapply(clusterNames, function(x){
-      readRDS(paste0(peakDir, sprintf("/%s-reproduciblePeaks.gr.rds", x)))
+      peakFileName <- sprintf("%s-reproduciblePeaks.gr.rds", x)
+      peakFiles <- file.path(peakSearchDirs, peakFileName)
+      peakFiles <- peakFiles[file.exists(peakFiles)]
+      if(length(peakFiles) == 0){
+        stop(
+          sprintf(
+            "Could not locate reproducible peaks file for cluster '%s'. Searched: %s",
+            x,
+            paste(file.path(peakSearchDirs, peakFileName), collapse = ", ")
+          )
+        )
+      }
+      if(length(peakFiles) > 1){
+        warning(
+          sprintf(
+            "Multiple reproducible peaks files found for cluster '%s'. Using %s",
+            x,
+            peakFiles[[1]]
+          )
+        )
+      }
+      readRDS(peakFiles[[1]])
     }) %>% as(., "GRangesList") %>% unlist()
   calledPeaks <- calledPeaks[calledPeaks$replicateScoreQuantile >= replicateScoreQuantileCutoff]
   peakGR <- peakGR[overlapsAny(peakGR, calledPeaks)]
@@ -347,5 +372,4 @@ getP2Gregions <- function(proj, genes, p2gGR=NULL, corrCutoff=0.4, buffer_space=
   resultGR <- resize(resultGR, width=ifelse(width(resultGR) > min_width, width(resultGR), min_width), fix="center")
   resultGR
 }
-
 

@@ -591,7 +591,7 @@ atac_proj$LFineClust <- unlist(atac.FineClust)[atac_proj$FineClust]
 # Exclude certain groups
 all_LFineClust <- unique(atac_proj$LFineClust)
 exclude <- c("B.cells", "Unknown", "Th_3", "M2.macs_3")
-use_groups <- all_LFineClust[all_LFineClust %ni% exclude]
+use_groups <- all_LFineClust[!is.na(all_LFineClust) & all_LFineClust %ni% exclude]
 
 # Identify Marker Peaks while controling for TSS and Depth Biases
 markerPeaks <- getMarkerFeatures(

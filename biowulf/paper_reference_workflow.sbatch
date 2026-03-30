@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=scscalp_paper
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=256g
-#SBATCH --time=72:00:00
+#SBATCH --mem=150g
+#SBATCH --time=12:00:00
 #SBATCH --gres=lscratch:200
 #SBATCH --output=%x-%j.out
 
